@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -54,25 +55,36 @@ public:
 }
 
 
-[[maybe_unused]] std::vector<std::string> tokenize_line(std::string line)
+[[maybe_unused]] std::vector<std::string> tokenize_line(const std::string& line)
 {
-  std::ptrdiff_t diff{}; 
+  /* TODO: Make sure trailing whitesapce is trimmed aswell */ 
+  
+  std::string::const_iterator begin { line.cbegin() };
+  std::string::const_iterator end   { line.end()    };
+  const std::string::difference_type count { std::count(begin, end, ' ') + 1 } ; 
+
+  std::vector<std::string> Tokenized; Tokenized.reserve(count);
+
   std::string::size_type slow{}; 
   std::string::size_type fast{}; 
-  for(auto i : line)
+  for( std::string::value_type i : line )
   {
-    if(line[fast] == ' ' && slow != fast)
+    if( i == ' ' && slow != fast)
     {
-      std::cout << line.substr(slow, fast) << std::endl;
-      fast = slow;
+      Tokenized.emplace_back(line.substr(slow, fast - slow));
+      fast++;
+      slow = fast;
     }
-    fast++;
+    else
+      fast++;
   }
-  return {}; 
+  Tokenized.emplace_back(line.substr(slow, fast - slow));
+  return Tokenized; 
 }
 
 
 /* Read stripped whitespace assumes no fully tabbed lines? */ 
+/* TODO: trim trailing whtiespace otherwise bug will arise with tokenize_line */ 
 
 std::string trim_whitespace(std::string value)
 {
@@ -103,8 +115,8 @@ int main (int argc, char *argv[])
   }
   std::string buffer; 
 
+  /* 
   std::stack<char> Tree; 
-
   int tabs{}; 
   while(std::getline(file, buffer))
   {
@@ -127,7 +139,12 @@ int main (int argc, char *argv[])
       tokenize_line(line);
     }
   }
+  */
 
+
+  auto V = tokenize_line("Hello World There Ayub");
+  for( auto i : V )
+    std::cout << i << std::endl;
 
   return EXIT_SUCCESS;
 }
