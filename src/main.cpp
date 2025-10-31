@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -7,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <fstream>
+#include <stack>
 
 enum class EJointTag
 {
@@ -38,7 +40,6 @@ public:
   uint32_t GetMotionOffset() const; 
 };
 
-
 [[maybe_unused]] std::optional<std::pair<std::string, std::string>> ParseArg( const std::string& str , char delim = '=' )
 {
   std::string::const_iterator begin{ str.begin() };
@@ -51,6 +52,35 @@ public:
   }
   return {};
 }
+
+
+[[maybe_unused]] std::vector<std::string> tokenize_line(std::string line)
+{
+  std::ptrdiff_t diff{}; 
+  std::string::size_type slow{}; 
+  std::string::size_type fast{}; 
+  for(auto i : line)
+  {
+    if(line[fast] == ' ' && slow != fast)
+    {
+      std::cout << line.substr(slow, fast) << std::endl;
+      fast = slow;
+    }
+    fast++;
+  }
+  return {}; 
+}
+
+
+/* Read stripped whitespace assumes no fully tabbed lines? */ 
+
+std::string trim_whitespace(std::string value)
+{
+  std::string::size_type idx{}; 
+  while(value[idx] == '\t') idx++ ; 
+  return value.substr(idx, value.size()); 
+}
+
 
 int main (int argc, char *argv[]) 
 {
@@ -71,28 +101,33 @@ int main (int argc, char *argv[])
     std::cout << "Could not open file" << std::endl;
     return EXIT_FAILURE; 
   }
+  std::string buffer; 
 
+  std::stack<char> Tree; 
 
-  std::string buffer;
-  std::ifstream::pos_type m_offset{};
-  while(std::getline(file,buffer))
+  int tabs{}; 
+  while(std::getline(file, buffer))
   {
-    if(!buffer.compare("MOTION"))
+    std::string line = trim_whitespace(buffer);
+    char current = line[0];
+    if(current == '{')
     {
-      m_offset =  file.tellg() ;
-      break;
+      std::cout << std::string(tabs,' ') << current << std::endl;
+      tabs++; 
+      Tree.push('{');
+    }
+    else if(current == '}')
+    {
+      tabs--;
+      std::cout << std::string(tabs,' ') << current << std::endl;
+      Tree.push('}');
+    }
+    else 
+    {
+      tokenize_line(line);
     }
   }
 
 
-  buffer = "" ;
-  file.seekg(m_offset);
-
-  std::getline(file, buffer);
-
-
-  std::cout << buffer << std::endl;
-
-std:
   return EXIT_SUCCESS;
 }
